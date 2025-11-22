@@ -1,2 +1,2 @@
 # LocalDocs
-A tool for creating and viewing a locally reliant knowledge repository.
+A tool for creating and viewing a locally reliant knowledge repository using web formats.

@@ -1,0 +1,124 @@
+/* Main Layout */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden; /* Prevents double scrollbars */
+    color: #333;
+}
+
+/* Sidebar Styling */
+#sidebar {
+    width: 300px;
+    background-color: #f4f4f4;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+#search-container {
+    padding: 15px;
+    background-color: #e0e0e0;
+    border-bottom: 1px solid #ccc;
+}
+
+#search-input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#clear-search {
+    font-size: 0.8em; 
+    margin-top: 5px; 
+    color: #666; 
+    cursor: pointer; 
+    display: none;
+}
+
+#clear-search:hover {
+    text-decoration: underline;
+    color: #d00;
+}
+
+#nav-links, #search-results {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 10px;
+}
+
+/* Navigation Links */
+.nav-item {
+    display: block;
+    padding: 8px 10px;
+    text-decoration: none;
+    color: #333;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.nav-item:hover {
+    background-color: #ddd;
+}
+
+.nav-header {
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    color: #666;
+    padding-left: 10px;
+}
+
+/* Search Results Styling */
+#search-results {
+    display: none; /* Hidden by default */
+    background: white;
+}
+
+.result-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+.result-item:hover {
+    background-color: #eef;
+}
+.result-title {
+    font-weight: bold;
+    color: #0056b3;
+}
+.result-snippet {
+    color: #666;
+    font-size: 0.85em;
+}
+
+/* Main Content Styling */
+#content-area {
+    flex-grow: 1;
+    padding: 40px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+section {
+    margin-bottom: 60px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+
+h1 { margin-top: 0; color: #2c3e50; }
+h2 { color: #34495e; }
+
+/* Highlight class for found text */
+.highlight {
+    background-color: yellow;
+    transition: background-color 2s ease-out;
+}

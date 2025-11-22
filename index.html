@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuals</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="sidebar">
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Search content...">
+            <div id="clear-search">Clear</div>
+        </div>
+        
+        <div id="search-results"></div>
+
+        <div id="nav-links">
+        <!-- example -->
+            <div class="nav-header">Source: Example</div>
+            <a class="nav-item" onclick="scrollToId('section id here')">1. Section id 1</a>
+            <a class="nav-item" onclick="scrollToId('section id here')">2. Section id 2</a>
+            
+        <!-- content -->
+            
+            <div class="nav-header">Source: HR Policies</div>
+            <a class="nav-item" onclick="scrollToId('intro')">1. Introduction</a>
+            <a class="nav-item" onclick="scrollToId('dress-code')">2. Dress Code</a>
+            
+            <div class="nav-header">Source: IT Ops</div>
+            <a class="nav-item" onclick="scrollToId('server-maint')">1. Server Maintenance</a>
+            <a class="nav-item" onclick="scrollToId('security')">2. Security Protocols</a>
+        </div>
+    </div>
+
+    <div id="content-area">
+        <!-- example -->
+        
+        <section id="section id here">
+            <h1>1. Title Content</h1>
+            <p>Content</p>
+        </section>
+        
+        <!-- content -->
+
+        <section id="section id here">
+            <h1>1. Title Content</h1>
+            <p>Content</p>
+        </section>
+        
+        <section id="intro">
+            <h1>1. Introduction</h1>
+            <p>Welcome to the company Standard Operating Procedures. This document outlines the core functions of our daily operations.</p>
+        </section>
+
+        <section id="dress-code">
+            <h2>2. Dress Code</h2>
+            <p>All employees are expected to dress business casual. On Fridays, jeans are permitted. Please ensure that all safety gear is worn when entering the manufacturing floor.</p>
+        </section>
+
+        <section id="server-maint">
+            <h1>IT: Server Maintenance</h1>
+            <p>Servers must be rebooted monthly. Ensure that the backup javascript functions are running correctly before initiating a restart sequence.</p>
+            <p>Check the RAID controller status and ensure all drives are green.</p>
+        </section>
+
+        <section id="security">
+            <h2>IT: Security Protocols</h2>
+            <p>Passwords must be changed every 90 days. Two-factor authentication is required for all remote access VPN connections.</p>
+        </section>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
