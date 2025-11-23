@@ -1,14 +1,158 @@
-// Select DOM elements
+// --- DOM ELEMENTS ---
 const searchInput = document.getElementById('search-input');
 const navLinks = document.getElementById('nav-links');
 const searchResults = document.getElementById('search-results');
 const clearBtn = document.getElementById('clear-search');
 const contentArea = document.getElementById('content-area');
+const collapseAllBtn = document.getElementById('collapse-all-btn');
 
-/**
- * Scrolls to a specific element ID in the content area
- * @param {string} id - The ID of the section to scroll to
- */
+// --- STATE MANAGEMENT ---
+let searchIndex = []; // Holds the pre-scanned text data
+let searchTimeout = null; // For debouncing
+let renderQueue = []; // For batch rendering
+let isRendering = false; // Flag to check if render loop is running
+
+// --- INITIALIZATION: BUILD THE INDEX ---
+// We run this once on page load. It's much faster to search this array than the DOM.
+window.addEventListener('DOMContentLoaded', () => {
+    console.log("Building Search Index...");
+    const elements = contentArea.querySelectorAll('p, h1, h2, h3, h4, li, div');
+    
+    elements.forEach(el => {
+        // textContent is faster than innerText for indexing
+        const rawText = el.textContent || "";
+        
+        // Skip empty elements or container divs with children
+        if (!rawText.trim() || (el.tagName === 'DIV' && el.children.length > 0)) return;
+
+        // Find the parent section title once and store it
+        const parentSection = el.closest('section');
+        const sectionTitle = parentSection 
+            ? parentSection.querySelector('h1, h2, h3')?.innerText 
+            : 'General';
+
+        searchIndex.push({
+            element: el, // Reference to the actual DOM element
+            textLower: rawText.toLowerCase(), // Store lowercase for fast comparison
+            originalText: rawText,
+            sectionTitle: sectionTitle || 'Unknown Section'
+        });
+    });
+    console.log(`Index built with ${searchIndex.length} items.`);
+});
+
+// --- SEARCH LOGIC ---
+
+// 1. Debounce: Wait for user to stop typing for 300ms
+searchInput.addEventListener('keyup', (e) => {
+    clearTimeout(searchTimeout);
+    
+    const query = e.target.value.toLowerCase().trim();
+
+    // UI Toggling
+    if (query.length > 0) {
+        navLinks.style.display = 'none';
+        searchResults.style.display = 'block';
+        clearBtn.style.display = 'block'; // Ensure 'Clear' button shows
+        if (collapseAllBtn) collapseAllBtn.style.display = 'none'; // Hide collapse btn during search
+    } else {
+        clearSearch();
+        return;
+    }
+
+    searchTimeout = setTimeout(() => {
+        performSearch(query);
+    }, 300); 
+});
+
+// 2. Perform Search using the Index
+function performSearch(query) {
+    // Cancel any ongoing rendering from previous searches
+    renderQueue = []; 
+    searchResults.innerHTML = ''; 
+
+    // Filter the index (Fast JS operation)
+    const matches = searchIndex.filter(item => item.textLower.includes(query));
+
+    if (matches.length === 0) {
+        searchResults.innerHTML = '<div class="result-item">No matches found.</div>';
+        return;
+    }
+
+    // Add matches to queue
+    renderQueue = matches;
+    
+    // Start processing the queue if not already running
+    if (!isRendering) {
+        processRenderQueue(query);
+    }
+}
+
+// 3. Batch Rendering (Queueing)
+function processRenderQueue(query) {
+    if (renderQueue.length === 0) {
+        isRendering = false;
+        return;
+    }
+
+    isRendering = true;
+
+    // Process the next 20 items (Batch size)
+    // Using a document fragment prevents browser reflow for every single item
+    const fragment = document.createDocumentFragment();
+    const batchSize = 20;
+    const batch = renderQueue.splice(0, batchSize);
+
+    batch.forEach(match => {
+        const resultDiv = document.createElement('div');
+        resultDiv.className = 'result-item';
+
+        // Calculate snippet
+        const index = match.textLower.indexOf(query);
+        const snippetStart = Math.max(0, index - 25);
+        const snippetEnd = Math.min(match.originalText.length, index + query.length + 25);
+        const snippet = "..." + match.originalText.substring(snippetStart, snippetEnd) + "...";
+
+        resultDiv.innerHTML = `
+            <div class="result-title">${match.sectionTitle}</div>
+            <div class="result-snippet">${snippet}</div>
+        `;
+
+        resultDiv.onclick = () => {
+            match.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Highlight Logic
+            match.element.classList.remove('highlight');
+            void match.element.offsetWidth; // Trigger reflow
+            match.element.classList.add('highlight');
+            setTimeout(() => match.element.classList.remove('highlight'), 2000);
+        };
+
+        fragment.appendChild(resultDiv);
+    });
+
+    // Append this batch to the DOM
+    searchResults.appendChild(fragment);
+
+    // Schedule the next batch for the next animation frame
+    // This keeps the UI responsive (no freezing)
+    requestAnimationFrame(() => processRenderQueue(query));
+}
+
+// --- UTILITIES ---
+
+function clearSearch() {
+    searchInput.value = '';
+    navLinks.style.display = 'block';
+    searchResults.style.display = 'none';
+    clearBtn.style.display = 'none'; 
+    if (collapseAllBtn) collapseAllBtn.style.display = 'inline'; // Bring back collapse btn
+    
+    // Clear queues
+    renderQueue = [];
+    searchResults.innerHTML = '';
+}
+
 function scrollToId(id) {
     const element = document.getElementById(id);
     if (element) {
@@ -16,93 +160,30 @@ function scrollToId(id) {
     }
 }
 
-/**
- * Clears the search input and resets the sidebar view
- */
-function clearSearch() {
-    searchInput.value = '';
-    navLinks.style.display = 'block';
-    searchResults.style.display = 'none';
-    clearBtn.style.display = 'none';
-}
+// Event Listener for Clear Button
+if (clearBtn) clearBtn.addEventListener('click', clearSearch);
 
-// Event Listener for Typing in Search Bar
-searchInput.addEventListener('keyup', (e) => {
-    const query = e.target.value.toLowerCase();
 
-    // UI Toggling
-    if (query.length > 0) {
-        navLinks.style.display = 'none';
-        searchResults.style.display = 'block';
-        clearBtn.style.display = 'block';
-    } else {
-        clearSearch();
-        return;
-    }
+// --- COLLAPSIBLE SIDEBAR LOGIC (Preserved) ---
+const groupHeaders = document.querySelectorAll('.nav-header');
 
-    // Clear previous results
-    searchResults.innerHTML = '';
-
-    // Get all text-containing elements in the content area 
-    // You can add 'td' or 'th' here if you have tables
-    const elements = contentArea.querySelectorAll('p, h1, h2, h3, h4, li, div');
-
-    let matchCount = 0;
-
-    elements.forEach(el => {
-        // Check if element has text and matches query
-        // We use el.childNodes to ensure we aren't finding text inside nested tags multiple times, 
-        // but for a simple manual, checking innerText is usually sufficient and safer.
-        if (el.innerText.toLowerCase().includes(query) && el.innerText.trim() !== "") {
-            
-            // Filter out huge container divs to avoid duplicate large hits
-            if (el.tagName === 'DIV' && el.children.length > 0) return; 
-
-            matchCount++;
-            
-            // create result item
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'result-item';
-            
-            // Find the parent section ID to know where to scroll (Context)
-            const parentSection = el.closest('section');
-            const sectionTitle = parentSection ? parentSection.querySelector('h1, h2, h3')?.innerText : 'General';
-
-            // Create snippet (context around the word)
-            const text = el.innerText;
-            const index = text.toLowerCase().indexOf(query);
-            // Grab 25 chars before and after
-            const snippetStart = Math.max(0, index - 25);
-            const snippetEnd = Math.min(text.length, index + query.length + 25);
-            const snippet = "..." + text.substring(snippetStart, snippetEnd) + "...";
-
-            resultDiv.innerHTML = `
-                <div class="result-title">${sectionTitle || 'Unknown Section'}</div>
-                <div class="result-snippet">${snippet}</div>
-            `;
-
-            // Add Click Event to Result
-            resultDiv.onclick = () => {
-                // Scroll to element
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                // Temporary Highlight
-                el.classList.remove('highlight'); // Reset animation if already there
-                void el.offsetWidth; // Trigger reflow to restart CSS animation
-                el.classList.add('highlight');
-                
-                // Remove highlight after 2 seconds
-                setTimeout(() => el.classList.remove('highlight'), 2000);
-            };
-
-            searchResults.appendChild(resultDiv);
+groupHeaders.forEach(header => {
+    header.addEventListener('click', () => {
+        header.classList.toggle('collapsed');
+        const content = header.nextElementSibling;
+        if (content) {
+            content.classList.toggle('collapsed');
         }
     });
-
-    if (matchCount === 0) {
-        searchResults.innerHTML = '<div class="result-item">No matches found.</div>';
-    }
 });
 
-// Event Listener for Clear Button
-clearBtn.addEventListener('click', clearSearch);
+// --- COLLAPSE ALL FUNCTION (Preserved) ---
+if (collapseAllBtn) {
+    collapseAllBtn.addEventListener('click', () => {
+        const headers = document.querySelectorAll('.nav-header');
+        const contents = document.querySelectorAll('.nav-content');
+
+        headers.forEach(header => header.classList.add('collapsed'));
+        contents.forEach(content => content.classList.add('collapsed'));
+    });
+}
